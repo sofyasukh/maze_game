@@ -1,7 +1,18 @@
+import pygame
+from constants import BLACK, SCREEN_WIDTH, SCREEN_HEIGHT
 
-def apply_fog(surface, visibility_radius):
-    fog = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-    fog.fill(BLACK)
-    center = (player_x, player_y)
-    pygame.draw.circle(fog, (0, 0, 0, 0), center, visibility_radius)
-    surface.blit(fog, (0, 0))
+class Fog:
+    def __init__(self, visibility_radius):
+        self.radius = visibility_radius
+        self.fog_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+    
+    def update(self, player_pos):
+        self.fog_surface.fill((0, 0, 0, 180))  # Полупрозрачный чёрный
+        pygame.draw.circle(
+            self.fog_surface, (0, 0, 0, 0),
+            (player_pos[0], player_pos[1]),
+            self.radius
+        )
+    
+    def draw(self, surface):
+        surface.blit(self.fog_surface, (0, 0))
