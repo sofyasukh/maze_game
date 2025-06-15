@@ -25,6 +25,10 @@ class Game:
         self.path_end_time = 0
         self.wall_change_timer = 0
         self.wall_change_interval = difficulty['wall_change_time'] * 1000
+        spawn_x = CELL_SIZE // 2  # Центрируем в клетке, спавн в левой верхней клетке
+        spawn_y = CELL_SIZE // 2
+        self.player = Player(spawn_x, spawn_y, self.maze.exit_pos)
+        assert self.maze.grid[0][0] == 0, "Стартовая позиция заблокирована!"
 
     def handle_events(self):
         for event in pygame.event.get():
