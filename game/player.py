@@ -1,5 +1,5 @@
 import pygame
-from constants import CELL_SIZE, PLAYER_SIZE
+from constants import CELL_SIZE, PLAYER_SIZE, PLAYER_SPEED
 
 class Player:
     def __init__(self, x, y, exit_pos):
@@ -14,15 +14,15 @@ class Player:
 
     def move(self, dx, dy, maze_grid):
         """Движение игрока с проверкой стен"""
-        new_x = self.rect.x + dx * CELL_SIZE
-        new_y = self.rect.y + dy * CELL_SIZE
+        new_x = self.rect.x + dx * PLAYER_SPEED  # Используем константу скорости
+        new_y = self.rect.y + dy * PLAYER_SPEED
+        
         grid_x, grid_y = new_x // CELL_SIZE, new_y // CELL_SIZE
 
         if 0 <= grid_x < len(maze_grid[0]) and 0 <= grid_y < len(maze_grid):
-            if maze_grid[grid_y][grid_x] == 0:  # Если клетка проходима
+            if maze_grid[grid_y][grid_x] == 0:
                 self.rect.x = new_x
                 self.rect.y = new_y
-                self._check_exit_reached(grid_x, grid_y)
                 return True
         return False
 
