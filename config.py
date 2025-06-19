@@ -32,8 +32,8 @@ BOMB = "bomb"
 # Уровни
 LEVELS = {
     1: {"size": (17, 17), "bonuses": 3},
-    2: {"size": (23, 23), "bonuses": 4, "allow_bomb": True},
-    3: {"size": (29, 29), "bonuses": 5},
-    4: {"size": (35, 35), "bonuses": 6},
-    5: {"size": (41, 41), "bonuses": 7},
+    2: {"size": (23, 23), "bonuses": 4},
+    3: {"size": (29, 17), "bonuses": 5, "allow_bomb": True},
+    4: {"size": (35, 35), "bonuses": 6, "allow_bomb": True},
+    5: {"size": (41, 41), "bonuses": 7, "allow_bomb": True},
 } 

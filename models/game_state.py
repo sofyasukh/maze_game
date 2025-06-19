@@ -27,19 +27,25 @@ class GameState:
         # Создание бонусов
         self.bonuses = []
         bonus_count = level_config["bonuses"]
-        if level == 2 and level_config.get("allow_bomb"):
-            # На втором уровне бонусы случайные, включая бомбу
-            bonus_types = [FREEZE, TELEPORT, PATH_HINT, BOMB]
+        if level >= 3 and level_config.get("allow_bomb"):
+            # На 5 уровне без PATH_HINT
+
+            if level == 5:
+                bonus_types = [FREEZE, TELEPORT, BOMB]
+            else:
+                bonus_types = [FREEZE, TELEPORT, PATH_HINT, BOMB]
             for _ in range(bonus_count):
                 pos = self.maze.get_random_position()
                 bonus_type = random.choice(bonus_types)
                 self.bonuses.append(Bonus(pos, bonus_type))
+
         else:
             bonus_types = [FREEZE, TELEPORT, PATH_HINT]
             for i in range(bonus_count):
                 pos = self.maze.get_random_position()
                 bonus_type = bonus_types[i % len(bonus_types)]
                 self.bonuses.append(Bonus(pos, bonus_type))
+
         
         # Монстры (пока пустой список)
         self.monsters = []
