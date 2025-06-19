@@ -59,6 +59,19 @@ class GameView:
         # Отрисовка выхода
         self.draw_exit(game_state.exit, min_row, min_col, offset_x, offset_y)
         
+        # ТУМАН ВОЙНЫ для уровней 4 и 5
+        if game_state.level in (4, 5):
+            fog = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+            fog.fill((0, 0, 0, 220))  # Более тёмный туман
+            player_x = (player_col - min_col) * CELL_SIZE + offset_x + CELL_SIZE // 2
+            player_y = (player_row - min_row) * CELL_SIZE + offset_y + CELL_SIZE // 2
+            if game_state.level == 4:
+                radius = CELL_SIZE * 5
+            else:
+                radius = CELL_SIZE * 3
+            pygame.draw.circle(fog, (0, 0, 0, 0), (player_x, player_y), radius)
+            self.screen.blit(fog, (0, 0))
+        
         # Отрисовка UI
         self.draw_ui(game_state)
         
@@ -98,8 +111,6 @@ class GameView:
                 y = (bonus.position[0] - min_row) * CELL_SIZE + offset_y
                 # На уровнях 3-5 все бонусы серые (игрок не знает тип)
                 if hasattr(self, 'game_state') and 3 <= self.game_state.level <= 5:
-                    color = (120, 120, 120)
-                elif hasattr(self, 'game_state') and self.game_state.level == 2:
                     color = (120, 120, 120)
                 else:
                     color_map = {FREEZE: BLUE, TELEPORT: MAGENTA, PATH_HINT: YELLOW, BOMB: (120, 120, 120)}

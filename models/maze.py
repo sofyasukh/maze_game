@@ -2,12 +2,13 @@ import random
 from typing import Tuple, List
 
 class Maze:
-    def __init__(self, width: int, height: int):
+    def __init__(self, width: int, height: int, wall_change_interval: int = 3000):
         self.width = width
         self.height = height
         self.grid = []
         self.changing_walls = []
         self.last_change = 0
+        self.wall_change_interval = wall_change_interval
         self.generate()
     
     def generate(self):
@@ -211,9 +212,8 @@ class Maze:
     
     def update_changing_walls(self, current_time):
         """Обновление меняющихся стен"""
-        if current_time - self.last_change > 3000:  # 3 секунды
+        if current_time - self.last_change > self.wall_change_interval:
             self.last_change = current_time
-            
             for wall_pos in self.changing_walls:
                 row, col = wall_pos
                 # Инвертируем стену
