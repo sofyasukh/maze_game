@@ -5,14 +5,27 @@ class GameView:
     def __init__(self, screen: pygame.Surface):
         self.screen = screen
         self.font = pygame.font.Font(None, 36)
+        # Загрузка иконок бонусов
+        self.bonus_images = {
+            FREEZE: pygame.image.load("assets/images/freeze.png").convert_alpha(),
+            TELEPORT: pygame.image.load("assets/images/teleport.png").convert_alpha(),
+            PATH_HINT: pygame.image.load("assets/images/path_hint.png").convert_alpha(),
+            'secret': pygame.image.load("assets/images/secret.png").convert_alpha(),
+        }
+        # Загрузка текстур пола, стен и фона
+        self.floor_img = pygame.image.load("assets/images/floor.png").convert()
+        self.wall_img = pygame.image.load("assets/images/wall.png").convert()
+        self.background = pygame.image.load("assets/images/background.png").convert()
         # Размер видимой области (в клетках)
         self.VIEW_SIZE = 30
     
     def draw(self, game_state):
         """Отрисовка игры"""
         self.game_state = game_state  # Для draw_bonuses
+        # Фон
+        self.screen.blit(pygame.transform.scale(self.background, (WINDOW_WIDTH, WINDOW_HEIGHT)), (0, 0))
         # Очистка экрана
-        self.screen.fill(WHITE)
+        # self.screen.fill(WHITE)  # Больше не нужен
         player_row, player_col = game_state.player.position
         maze = game_state.maze
         # Выбор размера видимой области
@@ -61,8 +74,8 @@ class GameView:
         
         # ТУМАН ВОЙНЫ для уровней 4 и 5
         if game_state.level in (4, 5):
-            fog = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
-            fog.fill((0, 0, 0, 255))  # Максимально тёмный туман
+            fog = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA) 
+            fog.fill((0, 0, 0, 240))
             player_x = (player_col - min_col) * CELL_SIZE + offset_x + CELL_SIZE // 2
             player_y = (player_row - min_row) * CELL_SIZE + offset_y + CELL_SIZE // 2
             if game_state.level == 4:
@@ -91,11 +104,12 @@ class GameView:
             for col in range(min_col, min(min_col + view_size, maze.width)):
                 x = (col - min_col) * CELL_SIZE + offset_x
                 y = (row - min_row) * CELL_SIZE + offset_y
-                
                 if maze.grid[row][col] == 1:  # Стена
-                    pygame.draw.rect(self.screen, BLACK, (x, y, CELL_SIZE, CELL_SIZE))
+                    img = pygame.transform.scale(self.wall_img, (CELL_SIZE, CELL_SIZE))
+                    self.screen.blit(img, (x, y))
                 else:  # Проход
-                    pygame.draw.rect(self.screen, WHITE, (x, y, CELL_SIZE, CELL_SIZE))
+                    img = pygame.transform.scale(self.floor_img, (CELL_SIZE, CELL_SIZE))
+                    self.screen.blit(img, (x, y))
                     pygame.draw.rect(self.screen, GRAY, (x, y, CELL_SIZE, CELL_SIZE), 1)
     
     def draw_player(self, player, min_row=0, min_col=0, offset_x=0, offset_y=0):
@@ -113,15 +127,14 @@ class GameView:
             if bonus.active:
                 x = (bonus.position[1] - min_col) * CELL_SIZE + offset_x
                 y = (bonus.position[0] - min_row) * CELL_SIZE + offset_y
-                # На уровнях 3-5 все бонусы серые (игрок не знает тип)
+                # На уровнях 3-5 все бонусы секретные (secret.png)
                 if hasattr(self, 'game_state') and 3 <= self.game_state.level <= 5:
-                    color = (120, 120, 120)
+                    image = self.bonus_images['secret']
                 else:
-                    color_map = {FREEZE: BLUE, TELEPORT: MAGENTA, PATH_HINT: YELLOW, BOMB: (120, 120, 120)}
-                    color = color_map.get(bonus.type, WHITE)
-                pygame.draw.circle(self.screen, color, 
-                                 (x + CELL_SIZE // 2, y + CELL_SIZE // 2), 
-                                 CELL_SIZE // 3)
+                    image = self.bonus_images.get(bonus.type)
+                if image:
+                    image = pygame.transform.smoothscale(image, (CELL_SIZE, CELL_SIZE))
+                    self.screen.blit(image, (x, y))
     
     def draw_exit(self, exit_pos, min_row=0, min_col=0, offset_x=0, offset_y=0):
         """Отрисовка выхода"""
