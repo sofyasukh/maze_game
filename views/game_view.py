@@ -90,8 +90,10 @@ class GameView:
             if bonus.active:
                 x = (bonus.position[1] - min_col) * CELL_SIZE + offset_x
                 y = (bonus.position[0] - min_row) * CELL_SIZE + offset_y
-                # На втором уровне все бонусы серые
-                if hasattr(self, 'game_state') and self.game_state.level == 2:
+                # На уровнях 3-5 все бонусы серые (игрок не знает тип)
+                if hasattr(self, 'game_state') and 3 <= self.game_state.level <= 5:
+                    color = (120, 120, 120)
+                elif hasattr(self, 'game_state') and self.game_state.level == 2:
                     color = (120, 120, 120)
                 else:
                     color_map = {FREEZE: BLUE, TELEPORT: MAGENTA, PATH_HINT: YELLOW, BOMB: (120, 120, 120)}
