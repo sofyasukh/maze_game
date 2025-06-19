@@ -32,6 +32,12 @@ class GameView:
             min_col = 0
             offset_x = (WINDOW_WIDTH - maze.width * CELL_SIZE) // 2
             offset_y = (WINDOW_HEIGHT - maze.height * CELL_SIZE) // 2
+        elif game_state.level in (4, 5):
+            # Центрируем видимую область (view_size x view_size) в окне
+            min_row = max(0, min(player_row - half, max(0, maze.height - view_size)))
+            min_col = max(0, min(player_col - half, max(0, maze.width - view_size)))
+            offset_x = (WINDOW_WIDTH - view_size * CELL_SIZE) // 2
+            offset_y = (WINDOW_HEIGHT - view_size * CELL_SIZE) // 2
         else:
             # Камера вокруг игрока
             min_row = max(0, min(player_row - half, max(0, maze.height - view_size)))
