@@ -32,6 +32,21 @@ class GameController:
                     if result:
                         return result
             
+            # Удержание клавиши для движения
+            if self.game_state and self.game_state.state == PLAYING:
+                keys = pygame.key.get_pressed()
+                direction = None
+                if keys[pygame.K_w] or keys[pygame.K_UP]:
+                    direction = (-1, 0)
+                elif keys[pygame.K_s] or keys[pygame.K_DOWN]:
+                    direction = (1, 0)
+                elif keys[pygame.K_a] or keys[pygame.K_LEFT]:
+                    direction = (0, -1)
+                elif keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+                    direction = (0, 1)
+                if direction:
+                    self.game_state.move_player(direction)
+            
             # Обновление игры
             if self.game_state:
                 self.game_state.update(dt)

@@ -5,6 +5,7 @@ class GameView:
     def __init__(self, screen: pygame.Surface):
         self.screen = screen
         self.font = pygame.font.Font(None, 36)
+        self.big_font = pygame.font.Font(None, 90)  # Крупный, но не слишком
         # Загрузка иконок бонусов
         self.bonus_images = {
             FREEZE: pygame.image.load("assets/images/freeze.png").convert_alpha(),
@@ -113,10 +114,9 @@ class GameView:
                     pygame.draw.rect(self.screen, GRAY, (x, y, CELL_SIZE, CELL_SIZE), 1)
     
     def draw_player(self, player, min_row=0, min_col=0, offset_x=0, offset_y=0):
-        """Отрисовка игрока"""
-        x = (player.position[1] - min_col) * CELL_SIZE + offset_x
-        y = (player.position[0] - min_row) * CELL_SIZE + offset_y
-        
+        px, py = player.pixel_pos
+        x = (px - min_col) * CELL_SIZE + offset_x
+        y = (py - min_row) * CELL_SIZE + offset_y
         color = CYAN if player.frozen else GREEN
         pygame.draw.rect(self.screen, color, (x, y, CELL_SIZE, CELL_SIZE))
         pygame.draw.rect(self.screen, BLACK, (x, y, CELL_SIZE, CELL_SIZE), 2)
@@ -184,14 +184,13 @@ class GameView:
     
     def draw_victory_screen(self, game_state):
         """Отрисовка экрана победы"""
-        # Полупрозрачный фон
         overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
         overlay.set_alpha(128)
         overlay.fill(WHITE)
         self.screen.blit(overlay, (0, 0))
-        
-        # Текст победы
-        victory_text = self.font.render("ПОБЕДА!", True, GREEN)
+        # Тёмно-зелёный цвет
+        dark_green = (0, 80, 0)
+        victory_text = self.big_font.render("ВЫ ПОБЕДИЛИ!", True, dark_green)
         text_rect = victory_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 50))
         self.screen.blit(victory_text, text_rect)
         
@@ -215,9 +214,11 @@ class GameView:
         overlay.set_alpha(180)
         overlay.fill((0, 0, 0))
         self.screen.blit(overlay, (0, 0))
-        text1 = self.font.render("GAME OVER! Вы нашли бомбу...", True, (255, 0, 0))
+        # Тёмно-красный цвет
+        dark_red = (120, 0, 0)
+        text1 = self.big_font.render("ВЫ ПРОИГРАЛИ! Вы нашли бомбу...", True, dark_red)
+        self.screen.blit(text1, (WINDOW_WIDTH//2 - text1.get_width()//2, WINDOW_HEIGHT//2 - 60))
         text2 = self.font.render("Заново (R)", True, (255, 255, 0))
         text3 = self.font.render("Меню (M)", True, (255, 255, 255))
-        self.screen.blit(text1, (WINDOW_WIDTH//2 - text1.get_width()//2, WINDOW_HEIGHT//2 - 60))
         self.screen.blit(text2, (WINDOW_WIDTH//2 - text2.get_width()//2, WINDOW_HEIGHT//2))
         self.screen.blit(text3, (WINDOW_WIDTH//2 - text3.get_width()//2, WINDOW_HEIGHT//2 + 40)) 
