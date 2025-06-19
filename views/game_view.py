@@ -5,28 +5,36 @@ class GameView:
     def __init__(self, screen: pygame.Surface):
         self.screen = screen
         self.font = pygame.font.Font(None, 36)
+        # Размер видимой области (в клетках)
+        self.VIEW_SIZE = 15
     
     def draw(self, game_state):
         """Отрисовка игры"""
         self.game_state = game_state  # Для draw_bonuses
         # Очистка экрана
         self.screen.fill(WHITE)
-        
-        # Отрисовка лабиринта
-        self.draw_maze(game_state.maze)
+        # --- КАМЕРА ---
+        player_row, player_col = game_state.player.position
+        maze = game_state.maze
+        half = self.VIEW_SIZE // 2
+        # Центрируем игрока, но не выходим за границы лабиринта
+        min_row = max(0, min(player_row - half, maze.height - self.VIEW_SIZE))
+        min_col = max(0, min(player_col - half, maze.width - self.VIEW_SIZE))
+        # Отрисовка лабиринта (только видимая часть)
+        self.draw_maze(maze, min_row, min_col)
         
         # Отрисовка подсказки пути
         if game_state.show_path_hint and game_state.path_hint:
-            self.draw_path_hint(game_state.path_hint)
+            self.draw_path_hint(game_state.path_hint, min_row, min_col)
         
         # Отрисовка игрока
-        self.draw_player(game_state.player)
+        self.draw_player(game_state.player, min_row, min_col)
         
         # Отрисовка бонусов
-        self.draw_bonuses(game_state.bonuses)
+        self.draw_bonuses(game_state.bonuses, min_row, min_col)
         
         # Отрисовка выхода
-        self.draw_exit(game_state.exit)
+        self.draw_exit(game_state.exit, min_row, min_col)
         
         # Отрисовка UI
         self.draw_ui(game_state)
@@ -37,12 +45,12 @@ class GameView:
         elif game_state.state == 'GAME_OVER':
             self.draw_game_over_screen(game_state)
     
-    def draw_maze(self, maze):
+    def draw_maze(self, maze, min_row=0, min_col=0):
         """Отрисовка лабиринта"""
-        for row in range(maze.height):
-            for col in range(maze.width):
-                x = col * CELL_SIZE
-                y = row * CELL_SIZE
+        for row in range(min_row, min(min_row + self.VIEW_SIZE, maze.height)):
+            for col in range(min_col, min(min_col + self.VIEW_SIZE, maze.width)):
+                x = (col - min_col) * CELL_SIZE
+                y = (row - min_row) * CELL_SIZE
                 
                 if maze.grid[row][col] == 1:  # Стена
                     pygame.draw.rect(self.screen, BLACK, (x, y, CELL_SIZE, CELL_SIZE))
@@ -50,21 +58,21 @@ class GameView:
                     pygame.draw.rect(self.screen, WHITE, (x, y, CELL_SIZE, CELL_SIZE))
                     pygame.draw.rect(self.screen, GRAY, (x, y, CELL_SIZE, CELL_SIZE), 1)
     
-    def draw_player(self, player):
+    def draw_player(self, player, min_row=0, min_col=0):
         """Отрисовка игрока"""
-        x = player.position[1] * CELL_SIZE
-        y = player.position[0] * CELL_SIZE
+        x = (player.position[1] - min_col) * CELL_SIZE
+        y = (player.position[0] - min_row) * CELL_SIZE
         
         color = CYAN if player.frozen else GREEN
         pygame.draw.rect(self.screen, color, (x, y, CELL_SIZE, CELL_SIZE))
         pygame.draw.rect(self.screen, BLACK, (x, y, CELL_SIZE, CELL_SIZE), 2)
     
-    def draw_bonuses(self, bonuses):
+    def draw_bonuses(self, bonuses, min_row=0, min_col=0):
         """Отрисовка бонусов"""
         for bonus in bonuses:
             if bonus.active:
-                x = bonus.position[1] * CELL_SIZE
-                y = bonus.position[0] * CELL_SIZE
+                x = (bonus.position[1] - min_col) * CELL_SIZE
+                y = (bonus.position[0] - min_row) * CELL_SIZE
                 # На втором уровне все бонусы серые
                 if hasattr(self, 'game_state') and self.game_state.level == 2:
                     color = (120, 120, 120)
@@ -75,24 +83,24 @@ class GameView:
                                  (x + CELL_SIZE // 2, y + CELL_SIZE // 2), 
                                  CELL_SIZE // 3)
     
-    def draw_exit(self, exit_pos):
+    def draw_exit(self, exit_pos, min_row=0, min_col=0):
         """Отрисовка выхода"""
-        x = exit_pos[1] * CELL_SIZE
-        y = exit_pos[0] * CELL_SIZE
+        x = (exit_pos[1] - min_col) * CELL_SIZE
+        y = (exit_pos[0] - min_row) * CELL_SIZE
         
         pygame.draw.rect(self.screen, RED, (x, y, CELL_SIZE, CELL_SIZE))
         pygame.draw.rect(self.screen, BLACK, (x, y, CELL_SIZE, CELL_SIZE), 2)
     
-    def draw_path_hint(self, path_hint):
+    def draw_path_hint(self, path_hint, min_row=0, min_col=0):
         """Отрисовка подсказки пути"""
         for i in range(len(path_hint) - 1):
             current = path_hint[i]
             next_pos = path_hint[i + 1]
             
-            x1 = current[1] * CELL_SIZE + CELL_SIZE // 2
-            y1 = current[0] * CELL_SIZE + CELL_SIZE // 2
-            x2 = next_pos[1] * CELL_SIZE + CELL_SIZE // 2
-            y2 = next_pos[0] * CELL_SIZE + CELL_SIZE // 2
+            x1 = (current[1] - min_col) * CELL_SIZE + CELL_SIZE // 2
+            y1 = (current[0] - min_row) * CELL_SIZE + CELL_SIZE // 2
+            x2 = (next_pos[1] - min_col) * CELL_SIZE + CELL_SIZE // 2
+            y2 = (next_pos[0] - min_row) * CELL_SIZE + CELL_SIZE // 2
             
             pygame.draw.line(self.screen, YELLOW, (x1, y1), (x2, y2), 2)
     
