@@ -53,7 +53,6 @@ class GameState:
         # Подсказка пути
         self.show_path_hint = False
         self.path_hint = []
-        self.path_hint_timer = 0.0
         
         # Заморозка лабиринта
         self.maze_freeze_timer = 0
@@ -73,15 +72,14 @@ class GameState:
             # Обновление меняющихся стен
             current_time = time.time() * 1000
             self.maze.update_changing_walls(current_time)
-            # Если активна подсказка пути, обновить путь после смены лабиринта
-            if self.show_path_hint:
-                self.path_hint = self.maze.find_path(self.player.position, self.exit)
-        # Подсказка пути: только таймер и отключение
-        if self.show_path_hint:
-            self.path_hint_timer -= dt
-            if self.path_hint_timer <= 0:
-                self.show_path_hint = False
-                self.path_hint = []
+        
+        # Если подсказка пути активна, проверяем ее валидность
+        if self.show_path_hint and self.path_hint:
+            for cell in self.path_hint:
+                if self.maze.is_wall(cell):
+                    self.show_path_hint = False
+                    self.path_hint = []
+                    break
         
         # Проверка коллизий
         self.check_collisions()

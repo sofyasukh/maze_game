@@ -13,10 +13,11 @@ class Bonus:
         if self.type == FREEZE:
             # Заморозка изменения лабиринта
             freeze_duration = {
-                1: 20.0,  # 30 секунд на первом уровне
-                2: 25.0,  # 20 секунд на втором
-                3: 10.0,  # 15 секунд на третьем
-                    # 5 секунд на пятом
+                1: 30.0,  # 30 секунд на первом уровне
+                2: 20.0,  # 20 секунд на втором
+                3: 15.0,  # 15 секунд на третьем
+                4: 10.0,  # 10 секунд на четвертом
+                5: 5.0    # 5 секунд на пятом
             }
             duration = freeze_duration.get(game_state.level, 10.0)
             game_state.maze_freeze_timer = duration
@@ -33,9 +34,8 @@ class Bonus:
             return False
         
         elif self.type == PATH_HINT:
-            # Показать путь к выходу на ограниченное время
+            # Показать путь к выходу
             game_state.show_path_hint = True
-            game_state.path_hint_timer = 7.0  # 7 секунд
             game_state.path_hint = game_state.maze.find_path(player.position, game_state.exit)
             return True
         

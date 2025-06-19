@@ -211,61 +211,14 @@ class Maze:
                 self.changing_walls.append((row, col))
     
     def update_changing_walls(self, current_time):
-        """Обновление меняющихся стен с гарантией проходимости"""
+        """Обновление меняющихся стен"""
         if current_time - self.last_change > self.wall_change_interval:
             self.last_change = current_time
-            max_attempts = 20
-            change_count = (self.width * self.height) // 7  # Больше изменений
-            for attempt in range(max_attempts):
-                # Копируем grid
-                test_grid = [row[:] for row in self.grid]
-                positions = set()
-                while len(positions) < change_count:
-                    row = random.randint(1, self.height - 2)
-                    col = random.randint(1, self.width - 2)
-                    positions.add((row, col))
-                # Инвертируем выбранные клетки в копии
-                for row, col in positions:
-                    test_grid[row][col] = 1 - test_grid[row][col]
-                # Проверяем путь
-                path = self.find_path_on_grid((1, 1), (self.height - 2, self.width - 2), test_grid)
-                if path:
-                    # Применяем изменения к реальному grid
-                    for row, col in positions:
-                        self.grid[row][col] = 1 - self.grid[row][col]
-                    break
-
-    def find_path_on_grid(self, start, goal, grid):
-        """A* для произвольной сетки grid"""
-        if start == goal:
-            return [start]
-        open_set = [start]
-        came_from = {}
-        g_score = {start: 0}
-        f_score = {start: self.heuristic(start, goal)}
-        height = len(grid)
-        width = len(grid[0])
-        while open_set:
-            current = min(open_set, key=lambda x: f_score.get(x, float('inf')))
-            if current == goal:
-                path = [current]
-                while current in came_from:
-                    current = came_from[current]
-                    path.append(current)
-                return path[::-1]
-            open_set.remove(current)
-            for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
-                neighbor = (current[0] + dr, current[1] + dc)
-                if (0 <= neighbor[0] < height and 0 <= neighbor[1] < width and grid[neighbor[0]][neighbor[1]] == 0):
-                    tentative_g = g_score.get(current, float('inf')) + 1
-                    if tentative_g < g_score.get(neighbor, float('inf')):
-                        came_from[neighbor] = current
-                        g_score[neighbor] = tentative_g
-                        f_score[neighbor] = tentative_g + self.heuristic(neighbor, goal)
-                        if neighbor not in open_set:
-                            open_set.append(neighbor)
-        return []
-
+            for wall_pos in self.changing_walls:
+                row, col = wall_pos
+                # Инвертируем стену
+                self.grid[row][col] = 1 - self.grid[row][col]
+    
     def get_random_position(self) -> Tuple[int, int]:
         """Получение случайной пустой позиции"""
         attempts = 0
