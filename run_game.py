@@ -11,7 +11,7 @@ class Game:
         pygame.display.set_caption("Лабиринт")
         
         self.menu_controller = MenuController(self.screen)
-        self.game_controller = GameController(self.screen)
+        # GameController будет создаваться динамически с ссылкой на MenuView
         
         self.current_level = 1
         self.running = True
@@ -34,7 +34,9 @@ class Game:
     
     def play_level(self, level: int):
         """Игра в уровне"""
-        result = self.game_controller.start_game(level)
+        # Создаем GameController с ссылкой на MenuView для обновления рекордов
+        game_controller = GameController(self.screen, self.menu_controller.menu_view)
+        result = game_controller.start_game(level)
         if result == "menu":
             return
         elif result and result.startswith("next_level_"):

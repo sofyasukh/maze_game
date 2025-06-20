@@ -4,11 +4,12 @@ from models.game_state import GameState
 from views.game_view import GameView
 
 class GameController:
-    def __init__(self, screen: pygame.Surface):
+    def __init__(self, screen: pygame.Surface, menu_view=None):
         self.screen = screen
         self.game_state = None
         self.game_view = GameView(screen)
         self.clock = pygame.time.Clock()
+        self.menu_view = menu_view  # Ссылка на MenuView для обновления рекордов
     
     def start_game(self, level: int = 1):
         """Запуск игры"""
@@ -61,6 +62,11 @@ class GameController:
                 # Проверяем, перешла ли игра в состояние GAME_OVER (бомба сработала)
                 if previous_state == PLAYING and self.game_state.state == 'GAME_OVER':
                     self.game_view.play_explosion_sound()
+                # Проверяем победу и обновляем рекорд
+                elif previous_state == PLAYING and self.game_state.state == VICTORY:
+                    # Обновляем рекорд для текущего уровня
+                    if self.menu_view:
+                        self.menu_view.update_record(self.game_state.level, self.game_state.get_game_time())
             
             # Отрисовка
             if self.game_state:
