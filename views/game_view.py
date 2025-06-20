@@ -1,5 +1,6 @@
 import pygame
 from config import *
+from views.menu_view import MenuView
 
 class GameView:
     def __init__(self, screen: pygame.Surface):
@@ -11,14 +12,102 @@ class GameView:
             FREEZE: pygame.image.load("assets/images/freeze.png").convert_alpha(),
             TELEPORT: pygame.image.load("assets/images/teleport.png").convert_alpha(),
             PATH_HINT: pygame.image.load("assets/images/path_hint.png").convert_alpha(),
-            'secret': pygame.image.load("assets/images/secret.png").convert_alpha(),
+            BOMB: pygame.image.load("assets/images/bomb.png").convert_alpha(),
         }
+        # Загрузка изображения флага
+        self.flag_img = pygame.image.load("assets/images/flag.png").convert_alpha()
+        # Загрузка звука взрыва
+        self.boom_sound = pygame.mixer.Sound("assets/sounds/boom.wav")
+        # Загрузка всех звуков
+        self.click_sound = pygame.mixer.Sound("assets/sounds/click.wav")
+        self.freezing_sound = pygame.mixer.Sound("assets/sounds/freezing.wav")
+        self.teleporting_sound = pygame.mixer.Sound("assets/sounds/teleporting.wav")
+        self.hint_sound = pygame.mixer.Sound("assets/sounds/hint.wav")
+        self.win_sound = pygame.mixer.Sound("assets/sounds/win.wav")
+        # Загрузка фоновой музыки
+        self.soundtrack = pygame.mixer.Sound("assets/sounds/soundtrack.wav")
+        # Загрузка изображения взрыва
+        self.explosion_img = pygame.image.load("assets/images/explosion.png").convert_alpha()
         # Загрузка текстур пола, стен и фона
         self.floor_img = pygame.image.load("assets/images/floor.png").convert()
         self.wall_img = pygame.image.load("assets/images/wall.png").convert()
         self.background = pygame.image.load("assets/images/background.png").convert()
         # Размер видимой области (в клетках)
         self.VIEW_SIZE = 30
+    
+    def play_boom_sound(self):
+        """Воспроизведение звука взрыва"""
+        try:
+            self.boom_sound.play()
+        except:
+            pass  # Игнорируем ошибки воспроизведения
+    
+    def play_click_sound(self):
+        """Воспроизведение звука клика"""
+        try:
+            self.click_sound.play()
+        except:
+            pass
+    
+    def play_freezing_sound(self):
+        """Воспроизведение звука заморозки"""
+        try:
+            self.freezing_sound.play()
+        except:
+            pass
+    
+    def play_teleporting_sound(self):
+        """Воспроизведение звука телепортации"""
+        try:
+            self.teleporting_sound.play()
+        except:
+            pass
+    
+    def play_hint_sound(self):
+        """Воспроизведение звука подсказки"""
+        try:
+            self.hint_sound.play()
+        except:
+            pass
+    
+    def play_win_sound(self):
+        """Воспроизведение звука победы"""
+        try:
+            self.win_sound.play()
+        except:
+            pass
+    
+    def play_soundtrack(self):
+        """Воспроизведение фоновой музыки с зацикливанием"""
+        if MenuView.global_music_enabled:  # Проверяем глобальное состояние
+            try:
+                self.soundtrack.set_volume(0.3)  # Устанавливаем громкость 30%
+                self.soundtrack.play(-1)  # -1 означает бесконечное зацикливание
+            except:
+                pass
+    
+    def stop_soundtrack(self):
+        """Остановка фоновой музыки"""
+        try:
+            self.soundtrack.stop()
+        except:
+            pass
+    
+    def pause_soundtrack(self):
+        """Пауза фоновой музыки"""
+        try:
+            self.soundtrack.stop()
+        except:
+            pass
+    
+    def play_explosion_sound(self):
+        """Воспроизведение звука взрыва"""
+        try:
+            # Останавливаем фоновую музыку при взрыве
+            self.stop_soundtrack()
+            self.boom_sound.play()
+        except:
+            pass
     
     def draw(self, game_state):
         """Отрисовка игры"""
@@ -73,10 +162,13 @@ class GameView:
         # Отрисовка выхода
         self.draw_exit(game_state.exit, min_row, min_col, offset_x, offset_y)
         
+        # Отрисовка анимаций взрыва
+        self.draw_explosions(game_state.explosion_animations, min_row, min_col, offset_x, offset_y)
+        
         # ТУМАН ВОЙНЫ для уровней 4 и 5
         if game_state.level in (4, 5):
             fog = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA) 
-            fog.fill((0, 0, 0, 240))
+            fog.fill((0, 0, 0, 255))
             player_x = (player_col - min_col) * CELL_SIZE + offset_x + CELL_SIZE // 2
             player_y = (player_row - min_row) * CELL_SIZE + offset_y + CELL_SIZE // 2
             if game_state.level == 4:
@@ -117,9 +209,29 @@ class GameView:
         px, py = player.pixel_pos
         x = (px - min_col) * CELL_SIZE + offset_x
         y = (py - min_row) * CELL_SIZE + offset_y
-        color = CYAN if player.frozen else GREEN
+        
+        # Менее насыщенные цвета
+        if player.frozen:
+            color = (100, 200, 200)  # Светло-голубой вместо CYAN
+        else:
+            color = (100, 200, 100)  # Светло-зелёный вместо GREEN
+        
         pygame.draw.rect(self.screen, color, (x, y, CELL_SIZE, CELL_SIZE))
         pygame.draw.rect(self.screen, BLACK, (x, y, CELL_SIZE, CELL_SIZE), 2)
+        
+        # Добавляем глаза
+        eye_size = CELL_SIZE // 6
+        eye_offset = CELL_SIZE // 4
+        
+        # Левый глаз
+        left_eye_x = x + eye_offset
+        left_eye_y = y + eye_offset
+        pygame.draw.circle(self.screen, BLACK, (left_eye_x, left_eye_y), eye_size)
+        
+        # Правый глаз
+        right_eye_x = x + CELL_SIZE - eye_offset
+        right_eye_y = y + eye_offset
+        pygame.draw.circle(self.screen, BLACK, (right_eye_x, right_eye_y), eye_size)
     
     def draw_bonuses(self, bonuses, min_row=0, min_col=0, offset_x=0, offset_y=0):
         """Отрисовка бонусов"""
@@ -127,11 +239,7 @@ class GameView:
             if bonus.active:
                 x = (bonus.position[1] - min_col) * CELL_SIZE + offset_x
                 y = (bonus.position[0] - min_row) * CELL_SIZE + offset_y
-                # На уровнях 3-5 все бонусы секретные (secret.png)
-                if hasattr(self, 'game_state') and 3 <= self.game_state.level <= 5:
-                    image = self.bonus_images['secret']
-                else:
-                    image = self.bonus_images.get(bonus.type)
+                image = self.bonus_images.get(bonus.type)
                 if image:
                     image = pygame.transform.smoothscale(image, (CELL_SIZE, CELL_SIZE))
                     self.screen.blit(image, (x, y))
@@ -141,8 +249,18 @@ class GameView:
         x = (exit_pos[1] - min_col) * CELL_SIZE + offset_x
         y = (exit_pos[0] - min_row) * CELL_SIZE + offset_y
         
-        pygame.draw.rect(self.screen, RED, (x, y, CELL_SIZE, CELL_SIZE))
-        pygame.draw.rect(self.screen, BLACK, (x, y, CELL_SIZE, CELL_SIZE), 2)
+        # Отображаем флаг вместо красного квадрата
+        try:
+            flag_img = pygame.transform.smoothscale(self.flag_img, (CELL_SIZE, CELL_SIZE))
+            self.screen.blit(flag_img, (x, y))
+        except:
+            # Fallback: если флаг не загрузился, рисуем цветной прямоугольник с текстом
+            pygame.draw.rect(self.screen, (255, 255, 0), (x, y, CELL_SIZE, CELL_SIZE))  # Жёлтый
+            pygame.draw.rect(self.screen, BLACK, (x, y, CELL_SIZE, CELL_SIZE), 2)
+            # Добавляем текст "FLAG"
+            flag_text = pygame.font.Font(None, 20).render("FLAG", True, BLACK)
+            text_rect = flag_text.get_rect(center=(x + CELL_SIZE//2, y + CELL_SIZE//2))
+            self.screen.blit(flag_text, text_rect)
     
     def draw_path_hint(self, path_hint, min_row=0, min_col=0, offset_x=0, offset_y=0):
         """Отрисовка подсказки пути"""
@@ -159,6 +277,14 @@ class GameView:
     
     def draw_ui(self, game_state):
         """Отрисовка UI"""
+        # Светло-зелёная заливка для легенды слева
+        legend_width = 200
+        legend_height = 200
+        legend_surface = pygame.Surface((legend_width, legend_height))
+        legend_surface.fill((200, 255, 200))  # Светло-зелёный
+        legend_surface.set_alpha(200)  # Полупрозрачность
+        self.screen.blit(legend_surface, (5, 5))
+        
         # Уровень
         level_text = self.font.render(f"Уровень: {game_state.level}", True, BLACK)
         self.screen.blit(level_text, (10, 10))
@@ -167,20 +293,15 @@ class GameView:
         time_text = self.font.render(f"Время: {game_state.get_game_time():.1f}с", True, BLACK)
         self.screen.blit(time_text, (10, 50))
         
-        # Бонусы
-        active_bonuses = sum(1 for b in game_state.bonuses if b.active)
-        bonus_text = self.font.render(f"Бонусы: {active_bonuses}", True, BLACK)
-        self.screen.blit(bonus_text, (10, 90))
-        
         # Заморозка лабиринта
         if game_state.maze_freeze_timer > 0:
             freeze_text = self.font.render(f"Заморозка: {game_state.maze_freeze_timer:.1f}с", True, BLUE)
-            self.screen.blit(freeze_text, (10, 130))
+            self.screen.blit(freeze_text, (10, 90))
         
         # Подсказка пути
         if game_state.show_path_hint:
-            hint_text = self.font.render("Путь показан", True, YELLOW)
-            self.screen.blit(hint_text, (10, 170))
+            hint_text = self.font.render(f"Путь: {game_state.path_hint_timer:.1f}с", True, YELLOW)
+            self.screen.blit(hint_text, (10, 130))
     
     def draw_victory_screen(self, game_state):
         """Отрисовка экрана победы"""
@@ -190,7 +311,7 @@ class GameView:
         self.screen.blit(overlay, (0, 0))
         # Тёмно-зелёный цвет
         dark_green = (0, 80, 0)
-        victory_text = self.big_font.render("ВЫ ПОБЕДИЛИ!", True, dark_green)
+        victory_text = self.big_font.render("ПОБЕДА!", True, dark_green)
         text_rect = victory_text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 50))
         self.screen.blit(victory_text, text_rect)
         
@@ -216,9 +337,32 @@ class GameView:
         self.screen.blit(overlay, (0, 0))
         # Тёмно-красный цвет
         dark_red = (120, 0, 0)
-        text1 = self.big_font.render("ВЫ ПРОИГРАЛИ! Вы нашли бомбу...", True, dark_red)
+        text1 = self.big_font.render("ИГРА ОКОНЧЕНА!", True, dark_red)
         self.screen.blit(text1, (WINDOW_WIDTH//2 - text1.get_width()//2, WINDOW_HEIGHT//2 - 60))
-        text2 = self.font.render("Заново (R)", True, (255, 255, 0))
-        text3 = self.font.render("Меню (M)", True, (255, 255, 255))
+        
+        # Определяем причину смерти
+        if hasattr(game_state, 'death_reason') and game_state.death_reason == 'bomb':
+            text2 = self.font.render("Не подходи близко к бомбе", True, WHITE)
+        else:
+            text2 = self.font.render("Монстр вас поймал!", True, WHITE)
+        
+        text3 = self.font.render("R - Перезапустить уровень", True, WHITE)
+        text4 = self.font.render("M - Главное меню", True, WHITE)
         self.screen.blit(text2, (WINDOW_WIDTH//2 - text2.get_width()//2, WINDOW_HEIGHT//2))
-        self.screen.blit(text3, (WINDOW_WIDTH//2 - text3.get_width()//2, WINDOW_HEIGHT//2 + 40)) 
+        self.screen.blit(text3, (WINDOW_WIDTH//2 - text3.get_width()//2, WINDOW_HEIGHT//2 + 40))
+        self.screen.blit(text4, (WINDOW_WIDTH//2 - text4.get_width()//2, WINDOW_HEIGHT//2 + 80))
+    
+    def draw_explosions(self, explosions, min_row=0, min_col=0, offset_x=0, offset_y=0):
+        """Отрисовка анимаций взрыва"""
+        for explosion in explosions:
+            center_row, center_col = explosion['position']
+            size = explosion['size']
+            
+            # Вычисляем координаты для одной большой картинки взрыва
+            x = (center_col - min_col) * CELL_SIZE + offset_x - CELL_SIZE
+            y = (center_row - min_row) * CELL_SIZE + offset_y - CELL_SIZE
+            
+            # Масштабируем изображение взрыва под размер 3x3 клетки
+            explosion_size = CELL_SIZE * 3
+            explosion_big = pygame.transform.scale(self.explosion_img, (explosion_size, explosion_size))
+            self.screen.blit(explosion_big, (x, y)) 

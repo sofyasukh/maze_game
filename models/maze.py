@@ -210,30 +210,94 @@ class Maze:
             if self.grid[row][col] == 0:
                 self.changing_walls.append((row, col))
     
-    def update_changing_walls(self, current_time):
-        """Обновление меняющихся стен с гарантией проходимости"""
+    def update_changing_walls(self, current_time, bonus_positions=None):
+        """Обновление меняющихся стен с оптимизированной проверкой проходимости"""
+        if bonus_positions is None:
+            bonus_positions = set()
+        else:
+            bonus_positions = set(bonus_positions)
+        
         if current_time - self.last_change > self.wall_change_interval:
             self.last_change = current_time
-            max_attempts = 20
-            change_count = (self.width * self.height) // 7  # Больше изменений
+            
+            # Уменьшаем количество попыток и изменений для производительности
+            max_attempts = 5  # Было 20
+            change_count = (self.width * self.height) // 15  # Было 7
+            
+            # Предварительно собираем все доступные позиции
+            available_positions = []
+            for row in range(1, self.height - 2):
+                for col in range(1, self.width - 2):
+                    if (row, col) not in bonus_positions:
+                        available_positions.append((row, col))
+            
+            if not available_positions:
+                return
+            
+            # Кэшируем текущий путь
+            current_path = self.find_path((1, 1), (self.height - 2, self.width - 2))
+            if not current_path:
+                return  # Если пути нет, не меняем ничего
+            
             for attempt in range(max_attempts):
-                # Копируем grid
-                test_grid = [row[:] for row in self.grid]
+                # Выбираем случайные позиции из доступных
                 positions = set()
-                while len(positions) < change_count:
-                    row = random.randint(1, self.height - 2)
-                    col = random.randint(1, self.width - 2)
-                    positions.add((row, col))
-                # Инвертируем выбранные клетки в копии
+                temp_available = available_positions.copy()
+                random.shuffle(temp_available)
+                
+                for pos in temp_available:
+                    if len(positions) >= change_count:
+                        break
+                    positions.add(pos)
+                
+                if len(positions) < change_count:
+                    continue
+                
+                # Быстрая проверка: если меняем только стены на проходы, путь точно есть
+                wall_to_path = 0
+                path_to_wall = 0
                 for row, col in positions:
-                    test_grid[row][col] = 1 - test_grid[row][col]
-                # Проверяем путь
-                path = self.find_path_on_grid((1, 1), (self.height - 2, self.width - 2), test_grid)
-                if path:
-                    # Применяем изменения к реальному grid
+                    if self.grid[row][col] == 1:  # Стена -> проход
+                        wall_to_path += 1
+                    else:  # Проход -> стена
+                        path_to_wall += 1
+                
+                # Если только добавляем проходы, путь гарантированно есть
+                if path_to_wall == 0:
+                    # Применяем изменения сразу
                     for row, col in positions:
                         self.grid[row][col] = 1 - self.grid[row][col]
-                    break
+                    return
+                
+                # Если убираем проходы, проверяем путь только если убираем немного
+                if path_to_wall <= 2:  # Убираем максимум 2 прохода
+                    # Копируем только изменяемые клетки
+                    changes = {}
+                    for row, col in positions:
+                        changes[(row, col)] = self.grid[row][col]
+                        self.grid[row][col] = 1 - self.grid[row][col]
+                    
+                    # Быстрая проверка пути
+                    path = self.find_path((1, 1), (self.height - 2, self.width - 2))
+                    if path:
+                        return  # Изменения применены
+                    else:
+                        # Откатываем изменения
+                        for (row, col), value in changes.items():
+                            self.grid[row][col] = value
+                
+                # Если много изменений, используем полную проверку (редко)
+                if attempt == max_attempts - 1:
+                    # Последняя попытка с полной проверкой
+                    test_grid = [row[:] for row in self.grid]
+                    for row, col in positions:
+                        test_grid[row][col] = 1 - test_grid[row][col]
+                    
+                    path = self.find_path_on_grid((1, 1), (self.height - 2, self.width - 2), test_grid)
+                    if path:
+                        for row, col in positions:
+                            self.grid[row][col] = 1 - self.grid[row][col]
+                        return
 
     def find_path_on_grid(self, start, goal, grid):
         """A* для произвольной сетки grid"""

@@ -12,14 +12,11 @@ class Bonus:
         """Применение эффекта бонуса"""
         if self.type == FREEZE:
             # Заморозка изменения лабиринта
-            freeze_duration = {
-                1: 20.0,  # 30 секунд на первом уровне
-                2: 25.0,  # 20 секунд на втором
-                3: 10.0,  # 15 секунд на третьем
-                    # 5 секунд на пятом
-            }
-            duration = freeze_duration.get(game_state.level, 10.0)
+            duration = 10.0
             game_state.maze_freeze_timer = duration
+            # Воспроизводим звук заморозки
+            if hasattr(game_state, 'game_view'):
+                game_state.game_view.play_freezing_sound()
             return True
         
         elif self.type == TELEPORT:
@@ -28,7 +25,12 @@ class Bonus:
             while attempts < 50:
                 new_pos = game_state.get_random_position()
                 if new_pos != player.position:
-                    return player.teleport(new_pos, game_state.maze.grid)
+                    success = player.teleport(new_pos, game_state.maze.grid)
+                    if success:
+                        # Воспроизводим звук телепортации
+                        if hasattr(game_state, 'game_view'):
+                            game_state.game_view.play_teleporting_sound()
+                    return success
                 attempts += 1
             return False
         
@@ -37,11 +39,25 @@ class Bonus:
             game_state.show_path_hint = True
             game_state.path_hint_timer = 7.0  # 7 секунд
             game_state.path_hint = game_state.maze.find_path(player.position, game_state.exit)
+            # Воспроизводим звук подсказки
+            if hasattr(game_state, 'game_view'):
+                game_state.game_view.play_hint_sound()
             return True
         
         elif self.type == BOMB:
-            # Бомба — мгновенный GAME OVER
+            # Детонация в радиусе 3 клеток
+            px, py = self.position
+            # Игрок уже в радиусе (проверка сделана в check_collisions)
             game_state.state = 'GAME_OVER'
+            game_state.death_reason = 'bomb'  # Устанавливаем причину смерти
+            # Создаём анимацию взрыва
+            game_state.create_explosion_animation(self.position)
+            # Деактивируем все бонусы в радиусе (кроме самой бомбы)
+            for bonus in game_state.bonuses:
+                if bonus is not self and bonus.active:
+                    bx, by = bonus.position
+                    if abs(bx - px) + abs(by - py) <= 3:
+                        bonus.active = False
             return True
         
         return False 

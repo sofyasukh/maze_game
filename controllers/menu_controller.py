@@ -16,6 +16,10 @@ class MenuController:
     
     def run(self):
         """Запуск меню"""
+        # Запускаем фоновую музыку только если она включена глобально
+        if self.menu_view.music_enabled:
+            self.menu_view.play_soundtrack()
+        
         running = True
         
         while running:
@@ -45,16 +49,26 @@ class MenuController:
     def handle_main_menu(self, key):
         """Обработка главного меню"""
         if key == pygame.K_UP:
-            self.selected_option = (self.selected_option - 1) % 3
+            self.selected_option = (self.selected_option - 1) % 4
+            self.menu_view.play_click_sound()
         elif key == pygame.K_DOWN:
-            self.selected_option = (self.selected_option + 1) % 3
+            self.selected_option = (self.selected_option + 1) % 4
+            self.menu_view.play_click_sound()
         elif key == pygame.K_RETURN:
             if self.selected_option == 0:  # Играть
+                self.menu_view.play_click_sound()
+                self.menu_view.stop_soundtrack()  # Останавливаем музыку
                 return f"play_level_{self.current_level}"
             elif self.selected_option == 1:  # Выбор уровня
+                self.menu_view.play_click_sound()
                 self.current_menu = "level_select"
                 self.selected_level = self.current_level
-            elif self.selected_option == 2:  # Выход
+            elif self.selected_option == 2:  # Музыка
+                self.menu_view.play_click_sound()
+                self.menu_view.toggle_music()
+            elif self.selected_option == 3:  # Выход
+                self.menu_view.play_click_sound()
+                self.menu_view.stop_soundtrack()  # Останавливаем музыку
                 return "quit"
     
     def handle_level_select(self, key):
@@ -66,9 +80,15 @@ class MenuController:
             self.selected_level = min(max_level, self.selected_level + 1)
         elif key == pygame.K_RETURN:
             if self.selected_level <= self.current_level:
+                self.menu_view.play_click_sound()
+                self.menu_view.stop_soundtrack()  # Останавливаем музыку
                 return f"play_level_{self.selected_level}"
         elif key == pygame.K_ESCAPE:
             self.current_menu = "main"
+            self.menu_view.play_click_sound()
+            # Возобновляем музыку при возврате в главное меню только если она включена
+            if self.menu_view.music_enabled:
+                self.menu_view.play_soundtrack()
     
     def render(self):
         """Отрисовка меню"""
