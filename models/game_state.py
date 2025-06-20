@@ -97,11 +97,11 @@ class GameState:
         # Анимация взрыва
         self.explosion_animations = []  # Список активных анимаций взрыва
         
-        # Ссылка на game_view для воспроизведения звуков
-        self.game_view = None  # type: ignore
-        
         # Причина смерти (для отображения сообщения)
         self.death_reason = None
+        
+        # Последний примененный бонус (для воспроизведения звука)
+        self.last_applied_bonus = None
     
     def update(self, dt: float):
         """Обновление состояния игры"""
@@ -171,15 +171,14 @@ class GameState:
                     # Для остальных бонусов: точное совпадение позиций
                     if bonus.position == self.player.position:
                         if bonus.apply_effect(self.player, self):
+                            # Записываем тип примененного бонуса для воспроизведения звука
+                            self.last_applied_bonus = bonus.type
                             bonus.active = False
         
         # Коллизия с выходом
         if self.player.position == self.exit:
             self.state = VICTORY
             self.end_time = time.time()  # Сохраняем время завершения
-            # Воспроизводим звук победы
-            if self.game_view:
-                self.game_view.play_win_sound()
     
     def get_random_position(self) -> Tuple[int, int]:
         """Получение случайной позиции"""

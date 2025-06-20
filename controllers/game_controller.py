@@ -2,23 +2,24 @@ import pygame
 from config import *
 from models.game_state import GameState
 from views.game_view import GameView
+from controllers.sound_controller import SoundController
 
 class GameController:
     def __init__(self, screen: pygame.Surface, menu_view=None):
         self.screen = screen
         self.game_state = None
         self.game_view = GameView(screen)
+        self.sound_controller = SoundController()
         self.clock = pygame.time.Clock()
         self.menu_view = menu_view  # Ссылка на MenuView для обновления рекордов
     
     def start_game(self, level: int = 1):
         """Запуск игры"""
         self.game_state = GameState(level)
-        self.game_state.game_view = self.game_view  # Устанавливаем ссылку для звуков
         # Запускаем фоновую музыку только если она включена глобально
         from views.menu_view import MenuView
         if MenuView.global_music_enabled:
-            self.game_view.play_soundtrack()
+            self.sound_controller.play_soundtrack()
         return self.run()
     
     def run(self):
@@ -32,7 +33,7 @@ class GameController:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     # Останавливаем музыку при выходе
-                    self.game_view.stop_soundtrack()
+                    self.sound_controller.stop_soundtrack()
                     return "quit"
                 
                 elif event.type == pygame.KEYDOWN:
@@ -59,11 +60,25 @@ class GameController:
             if self.game_state:
                 previous_state = self.game_state.state
                 self.game_state.update(dt)
+                
+                # Воспроизводим звуки при применении бонусов
+                if self.game_state.last_applied_bonus:
+                    if self.game_state.last_applied_bonus == FREEZE:
+                        self.sound_controller.play_freezing_sound()
+                    elif self.game_state.last_applied_bonus == TELEPORT:
+                        self.sound_controller.play_teleporting_sound()
+                    elif self.game_state.last_applied_bonus == PATH_HINT:
+                        self.sound_controller.play_hint_sound()
+                    # Сбрасываем флаг
+                    self.game_state.last_applied_bonus = None
+                
                 # Проверяем, перешла ли игра в состояние GAME_OVER (бомба сработала)
                 if previous_state == PLAYING and self.game_state.state == 'GAME_OVER':
-                    self.game_view.play_explosion_sound()
+                    self.sound_controller.play_explosion_sound()
                 # Проверяем победу и обновляем рекорд
                 elif previous_state == PLAYING and self.game_state.state == VICTORY:
+                    # Воспроизводим звук победы
+                    self.sound_controller.play_win_sound()
                     # Обновляем рекорд для текущего уровня
                     if self.menu_view:
                         self.menu_view.update_record(self.game_state.level, self.game_state.get_game_time())
@@ -90,24 +105,24 @@ class GameController:
             next_level = self.game_state.level + 1
             if key == pygame.K_n and next_level in LEVELS:
                 # Следующий уровень
-                self.game_view.play_click_sound()
-                self.game_view.stop_soundtrack()  # Останавливаем музыку
+                self.sound_controller.play_click_sound()
+                self.sound_controller.stop_soundtrack()  # Останавливаем музыку
                 return f"next_level_{next_level}"
             elif key == pygame.K_m:
                 # Возврат в меню
-                self.game_view.play_click_sound()
-                self.game_view.stop_soundtrack()  # Останавливаем музыку
+                self.sound_controller.play_click_sound()
+                self.sound_controller.stop_soundtrack()  # Останавливаем музыку
                 return "menu"
         
         elif self.game_state.state == 'GAME_OVER':
             if key == pygame.K_r:
                 # Перезапуск уровня
-                self.game_view.play_click_sound()
-                self.game_view.stop_soundtrack()  # Останавливаем музыку
+                self.sound_controller.play_click_sound()
+                self.sound_controller.stop_soundtrack()  # Останавливаем музыку
                 return f"play_level_{self.game_state.level}"
             elif key == pygame.K_m:
-                self.game_view.play_click_sound()
-                self.game_view.stop_soundtrack()  # Останавливаем музыку
+                self.sound_controller.play_click_sound()
+                self.sound_controller.stop_soundtrack()  # Останавливаем музыку
                 return "menu"
         
         return None

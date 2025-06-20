@@ -6,108 +6,27 @@ class GameView:
     def __init__(self, screen: pygame.Surface):
         self.screen = screen
         self.font = pygame.font.Font(None, 36)
-        self.big_font = pygame.font.Font(None, 90)  # Крупный, но не слишком
-        # Загрузка иконок бонусов
-        self.bonus_images = {
-            FREEZE: pygame.image.load("assets/images/freeze.png").convert_alpha(),
-            TELEPORT: pygame.image.load("assets/images/teleport.png").convert_alpha(),
-            PATH_HINT: pygame.image.load("assets/images/path_hint.png").convert_alpha(),
-            BOMB: pygame.image.load("assets/images/bomb.png").convert_alpha(),
-        }
-        # Загрузка изображения флага
+        self.big_font = pygame.font.Font(None, 72)
+        
+        # Загрузка изображений
+        self.wall_img = pygame.image.load("assets/images/wall.png").convert_alpha()
+        self.floor_img = pygame.image.load("assets/images/floor.png").convert_alpha()
         self.flag_img = pygame.image.load("assets/images/flag.png").convert_alpha()
-        # Загрузка звука взрыва
-        self.boom_sound = pygame.mixer.Sound("assets/sounds/boom.wav")
-        # Загрузка всех звуков
-        self.click_sound = pygame.mixer.Sound("assets/sounds/click.wav")
-        self.freezing_sound = pygame.mixer.Sound("assets/sounds/freezing.wav")
-        self.teleporting_sound = pygame.mixer.Sound("assets/sounds/teleporting.wav")
-        self.hint_sound = pygame.mixer.Sound("assets/sounds/hint.wav")
-        self.win_sound = pygame.mixer.Sound("assets/sounds/win.wav")
-        # Загрузка фоновой музыки
-        self.soundtrack = pygame.mixer.Sound("assets/sounds/soundtrack.wav")
+        
+        # Загрузка изображений бонусов
+        self.bonus_images = {}
+        self.bonus_images[FREEZE] = pygame.image.load("assets/images/freeze.png").convert_alpha()
+        self.bonus_images[TELEPORT] = pygame.image.load("assets/images/teleport.png").convert_alpha()
+        self.bonus_images[PATH_HINT] = pygame.image.load("assets/images/path_hint.png").convert_alpha()
+        self.bonus_images[BOMB] = pygame.image.load("assets/images/bomb.png").convert_alpha()
+        
         # Загрузка изображения взрыва
         self.explosion_img = pygame.image.load("assets/images/explosion.png").convert_alpha()
+        
         # Загрузка текстур пола, стен и фона
-        self.floor_img = pygame.image.load("assets/images/floor.png").convert()
-        self.wall_img = pygame.image.load("assets/images/wall.png").convert()
         self.background = pygame.image.load("assets/images/background.png").convert()
         # Размер видимой области (в клетках)
         self.VIEW_SIZE = 30
-    
-    def play_boom_sound(self):
-        """Воспроизведение звука взрыва"""
-        try:
-            self.boom_sound.play()
-        except:
-            pass  # Игнорируем ошибки воспроизведения
-    
-    def play_click_sound(self):
-        """Воспроизведение звука клика"""
-        try:
-            self.click_sound.play()
-        except:
-            pass
-    
-    def play_freezing_sound(self):
-        """Воспроизведение звука заморозки"""
-        try:
-            self.freezing_sound.play()
-        except:
-            pass
-    
-    def play_teleporting_sound(self):
-        """Воспроизведение звука телепортации"""
-        try:
-            self.teleporting_sound.play()
-        except:
-            pass
-    
-    def play_hint_sound(self):
-        """Воспроизведение звука подсказки"""
-        try:
-            self.hint_sound.play()
-        except:
-            pass
-    
-    def play_win_sound(self):
-        """Воспроизведение звука победы"""
-        try:
-            self.win_sound.play()
-        except:
-            pass
-    
-    def play_soundtrack(self):
-        """Воспроизведение фоновой музыки с зацикливанием"""
-        if MenuView.global_music_enabled:  # Проверяем глобальное состояние
-            try:
-                self.soundtrack.set_volume(0.3)  # Устанавливаем громкость 30%
-                self.soundtrack.play(-1)  # -1 означает бесконечное зацикливание
-            except:
-                pass
-    
-    def stop_soundtrack(self):
-        """Остановка фоновой музыки"""
-        try:
-            self.soundtrack.stop()
-        except:
-            pass
-    
-    def pause_soundtrack(self):
-        """Пауза фоновой музыки"""
-        try:
-            self.soundtrack.stop()
-        except:
-            pass
-    
-    def play_explosion_sound(self):
-        """Воспроизведение звука взрыва"""
-        try:
-            # Останавливаем фоновую музыку при взрыве
-            self.stop_soundtrack()
-            self.boom_sound.play()
-        except:
-            pass
     
     def draw(self, game_state):
         """Отрисовка игры"""

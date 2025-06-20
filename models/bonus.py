@@ -14,9 +14,6 @@ class Bonus:
             # Заморозка изменения лабиринта
             duration = 10.0
             game_state.maze_freeze_timer = duration
-            # Воспроизводим звук заморозки
-            if hasattr(game_state, 'game_view'):
-                game_state.game_view.play_freezing_sound()
             return True
         
         elif self.type == TELEPORT:
@@ -27,10 +24,7 @@ class Bonus:
                 if new_pos != player.position:
                     success = player.teleport(new_pos, game_state.maze.grid)
                     if success:
-                        # Воспроизводим звук телепортации
-                        if hasattr(game_state, 'game_view'):
-                            game_state.game_view.play_teleporting_sound()
-                    return success
+                        return success
                 attempts += 1
             return False
         
@@ -39,9 +33,6 @@ class Bonus:
             game_state.show_path_hint = True
             game_state.path_hint_timer = 7.0  # 7 секунд
             game_state.path_hint = game_state.maze.find_path(player.position, game_state.exit)
-            # Воспроизводим звук подсказки
-            if hasattr(game_state, 'game_view'):
-                game_state.game_view.play_hint_sound()
             return True
         
         elif self.type == BOMB:

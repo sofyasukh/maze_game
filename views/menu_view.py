@@ -13,10 +13,6 @@ class MenuView:
         self.big_font = pygame.font.Font(None, 72)
         # Загрузка фонового изображения меню
         self.menu_bg = pygame.image.load("assets/images/menu.png").convert()
-        # Загрузка звука клика
-        self.click_sound = pygame.mixer.Sound("assets/sounds/click.wav")
-        # Загрузка фоновой музыки
-        self.soundtrack = pygame.mixer.Sound("assets/sounds/soundtrack.wav")
         
         # Настройки
         self.music_enabled = MenuView.global_music_enabled
@@ -119,38 +115,6 @@ class MenuView:
             rect = text.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT - 100 + i * 30))
             self.screen.blit(text, rect)
     
-    def play_click_sound(self):
-        """Воспроизведение звука клика"""
-        try:
-            self.click_sound.play()
-        except:
-            pass
-    
-    def play_soundtrack(self):
-        """Воспроизведение фоновой музыки с зацикливанием"""
-        if self.music_enabled:
-            try:
-                self.soundtrack.set_volume(0.3)  # Устанавливаем громкость 30%
-                self.soundtrack.play(-1)  # -1 означает бесконечное зацикливание
-            except:
-                pass
-    
-    def stop_soundtrack(self):
-        """Остановка фоновой музыки"""
-        try:
-            self.soundtrack.stop()
-        except:
-            pass
-    
-    def toggle_music(self):
-        """Переключение музыки вкл/выкл"""
-        self.music_enabled = not self.music_enabled
-        MenuView.global_music_enabled = self.music_enabled  # Обновляем глобальное состояние
-        if self.music_enabled:
-            self.play_soundtrack()
-        else:
-            self.stop_soundtrack()
-
     def load_records(self):
         """Загрузка рекордов"""
         if os.path.exists("records.json"):
