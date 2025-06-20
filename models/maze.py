@@ -211,7 +211,7 @@ class Maze:
                 self.changing_walls.append((row, col))
     
     def update_changing_walls(self, current_time, bonus_positions=None):
-        """Обновление меняющихся стен с оптимизированной проверкой проходимости"""
+        """Обновление меняющихся стен с улучшенной проверкой проходимости"""
         if bonus_positions is None:
             bonus_positions = set()
         else:
@@ -221,8 +221,8 @@ class Maze:
             self.last_change = current_time
             
             # Уменьшаем количество попыток и изменений для производительности
-            max_attempts = 5  # Было 20
-            change_count = (self.width * self.height) // 15  # Было 7
+            max_attempts = 5
+            change_count = (self.width * self.height) // 15
             
             # Предварительно собираем все доступные позиции
             available_positions = []
@@ -234,10 +234,12 @@ class Maze:
             if not available_positions:
                 return
             
-            # Кэшируем текущий путь
+            # Проверяем текущий путь
             current_path = self.find_path((1, 1), (self.height - 2, self.width - 2))
             if not current_path:
-                return  # Если пути нет, не меняем ничего
+                # Если пути нет, исправляем лабиринт
+                self.ensure_maze_passability((1, 1), (self.height - 2, self.width - 2))
+                return
             
             for attempt in range(max_attempts):
                 # Выбираем случайные позиции из доступных
@@ -253,51 +255,26 @@ class Maze:
                 if len(positions) < change_count:
                     continue
                 
-                # Быстрая проверка: если меняем только стены на проходы, путь точно есть
-                wall_to_path = 0
-                path_to_wall = 0
+                # Применяем изменения
+                changes = {}
                 for row, col in positions:
-                    if self.grid[row][col] == 1:  # Стена -> проход
-                        wall_to_path += 1
-                    else:  # Проход -> стена
-                        path_to_wall += 1
+                    changes[(row, col)] = self.grid[row][col]
+                    self.grid[row][col] = 1 - self.grid[row][col]
                 
-                # Если только добавляем проходы, путь гарантированно есть
-                if path_to_wall == 0:
-                    # Применяем изменения сразу
-                    for row, col in positions:
-                        self.grid[row][col] = 1 - self.grid[row][col]
+                # Проверяем путь после изменений
+                path = self.find_path((1, 1), (self.height - 2, self.width - 2))
+                
+                if path:
+                    # Путь найден, изменения оставляем
                     return
-                
-                # Если убираем проходы, проверяем путь только если убираем немного
-                if path_to_wall <= 2:  # Убираем максимум 2 прохода
-                    # Копируем только изменяемые клетки
-                    changes = {}
-                    for row, col in positions:
-                        changes[(row, col)] = self.grid[row][col]
-                        self.grid[row][col] = 1 - self.grid[row][col]
+                else:
+                    # Путь не найден, откатываем изменения
+                    for (row, col), value in changes.items():
+                        self.grid[row][col] = value
                     
-                    # Быстрая проверка пути
-                    path = self.find_path((1, 1), (self.height - 2, self.width - 2))
-                    if path:
-                        return  # Изменения применены
-                    else:
-                        # Откатываем изменения
-                        for (row, col), value in changes.items():
-                            self.grid[row][col] = value
-                
-                # Если много изменений, используем полную проверку (редко)
-                if attempt == max_attempts - 1:
-                    # Последняя попытка с полной проверкой
-                    test_grid = [row[:] for row in self.grid]
-                    for row, col in positions:
-                        test_grid[row][col] = 1 - test_grid[row][col]
-                    
-                    path = self.find_path_on_grid((1, 1), (self.height - 2, self.width - 2), test_grid)
-                    if path:
-                        for row, col in positions:
-                            self.grid[row][col] = 1 - self.grid[row][col]
-                        return
+                    # Если это последняя попытка, исправляем лабиринт
+                    if attempt == max_attempts - 1:
+                        self.ensure_maze_passability((1, 1), (self.height - 2, self.width - 2))
 
     def find_path_on_grid(self, start, goal, grid):
         """A* для произвольной сетки grid"""
@@ -442,4 +419,67 @@ class Maze:
                 self.grid[new_pos[0]][new_pos[1]] = 0
                 current = new_pos
             else:
-                break 
+                break
+    
+    def ensure_maze_passability(self, player_position, exit_position):
+        """Проверка и обеспечение проходимости лабиринта"""
+        # Проверяем путь от игрока к выходу
+        path = self.find_path(player_position, exit_position)
+        
+        if not path:
+            # Если пути нет, пытаемся исправить лабиринт
+            self.fix_maze_passability(player_position, exit_position)
+            
+            # Проверяем еще раз
+            path = self.find_path(player_position, exit_position)
+            
+            # Если все еще нет пути, создаем принудительный путь
+            if not path:
+                self.create_emergency_path(player_position, exit_position)
+    
+    def fix_maze_passability(self, player_position, exit_position):
+        """Исправление проходимости лабиринта"""
+        # Создаем несколько дополнительных проходов
+        attempts = 0
+        max_attempts = 20
+        
+        while attempts < max_attempts:
+            # Выбираем случайную стену и создаем проход
+            row = random.randint(1, self.height - 2)
+            col = random.randint(1, self.width - 2)
+            
+            if self.grid[row][col] == 1:  # Если это стена
+                # Проверяем, что рядом есть пустые клетки
+                neighbors = [
+                    (row-1, col), (row+1, col),  # Вертикальные соседи
+                    (row, col-1), (row, col+1)   # Горизонтальные соседи
+                ]
+                
+                empty_neighbors = 0
+                for nr, nc in neighbors:
+                    if (0 <= nr < self.height and 0 <= nc < self.width and 
+                        self.grid[nr][nc] == 0):
+                        empty_neighbors += 1
+                
+                # Если рядом есть пустые клетки, создаем проход
+                if empty_neighbors > 0:
+                    self.grid[int(row)][int(col)] = 0
+                    
+                    # Проверяем, появился ли путь
+                    path = self.find_path(player_position, exit_position)
+                    if path:
+                        return  # Путь найден
+            
+            attempts += 1
+    
+    def create_emergency_path(self, player_position, exit_position):
+        """Создание экстренного пути при полной блокировке"""
+        # Создаем прямой путь от игрока к выходу
+        self.create_direct_path(player_position, exit_position)
+        
+        # Добавляем несколько дополнительных проходов для разнообразия
+        for _ in range(5):
+            row = random.randint(1, self.height - 2)
+            col = random.randint(1, self.width - 2)
+            if self.grid[int(row)][int(col)] == 1:
+                self.grid[int(row)][int(col)] = 0 

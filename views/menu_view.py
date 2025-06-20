@@ -54,8 +54,8 @@ class MenuView:
     
     def draw_level_select(self, selected_level: int, current_level: int):
         """Отрисовка выбора уровня"""
-        # Фон
-        self.screen.blit(self.menu_bg, (0, 0))
+        # Фон - растягиваем на весь экран
+        self.screen.blit(pygame.transform.scale(self.menu_bg, (WINDOW_WIDTH, WINDOW_HEIGHT)), (0, 0))
         
         # Заголовок
         title_text = self.big_font.render("Выбор уровня", True, WHITE)
@@ -109,7 +109,7 @@ class MenuView:
         
         # Инструкции
         instructions = [
-            "← → - Выбор уровня",
+            "Влево/Вправо - Выбор уровня",
             "Enter - Играть",
             "Esc - Назад"
         ]

@@ -119,6 +119,10 @@ class GameState:
             current_time = time.time() * 1000
             bonus_positions = [bonus.position for bonus in self.bonuses if bonus.active]
             self.maze.update_changing_walls(current_time, bonus_positions)
+            
+            # Проверяем проходимость лабиринта после изменений
+            self.maze.ensure_maze_passability(self.player.position, self.exit)
+            
             # Если активна подсказка пути, обновить путь после смены лабиринта
             if self.show_path_hint:
                 self.path_hint = self.maze.find_path(self.player.position, self.exit)
