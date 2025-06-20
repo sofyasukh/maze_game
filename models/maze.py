@@ -1,5 +1,6 @@
 import random
 from typing import Tuple, List
+from config import WALL, PATH
 
 class Maze:
     def __init__(self, width: int, height: int, wall_change_interval: int = 3000):
@@ -12,18 +13,28 @@ class Maze:
         self.generate()
     
     def generate(self):
-        """Генерация классического лабиринта с гарантированной проходимостью"""
+        """
+        Генерирует лабиринт с гарантированной проходимостью, используя DFS.
+
+        Алгоритм:
+        1. Создает сетку, полностью заполненную стенами.
+        2. Прорывает пути с помощью классического алгоритма DFS (backtracking).
+        3. Создает вход и выход.
+        4. Если после генерации нет пути от входа к выходу, создает прямой коридор.
+        5. Добавляет дополнительные проходы для увеличения связности.
+        6. Определяет стены, которые будут динамически меняться во время игры.
+        """
         # 1. Сетка стен
-        self.grid = [[1 for _ in range(self.width)] for _ in range(self.height)]
+        self.grid = [[WALL for _ in range(self.width)] for _ in range(self.height)]
 
         # 2. Классический DFS (backtracking) по всей сетке
         self.dfs_maze_classic(1, 1, set())
 
         # 3. Вход и выход
-        self.grid[0][1] = 0
-        self.grid[1][1] = 0
-        self.grid[self.height - 1][self.width - 2] = 0
-        self.grid[self.height - 2][self.width - 2] = 0
+        self.grid[0][1] = PATH
+        self.grid[1][1] = PATH
+        self.grid[self.height - 1][self.width - 2] = PATH
+        self.grid[self.height - 2][self.width - 2] = PATH
 
         # 4. Проверяем путь от старта к выходу
         from_pos = (1, 1)
@@ -73,44 +84,44 @@ class Maze:
         for dr, dc in dirs:
             nr, nc = row + dr * 2, col + dc * 2
             if 1 <= nr < self.height - 1 and 1 <= nc < self.width - 1:
-                if self.grid[nr][nc] == 1 and (nr, nc) not in reserved:
-                    self.grid[nr][nc] = 0
-                    self.grid[row + dr][col + dc] = 0
+                if self.grid[nr][nc] == WALL and (nr, nc) not in reserved:
+                    self.grid[nr][nc] = PATH
+                    self.grid[row + dr][col + dc] = PATH
                     self.dfs_maze_classic(nr, nc, reserved)
 
     def create_vertical_wall(self, x: int, y1: int, y2: int):
         """Создание вертикальной стены с проходами"""
         # Создаем стену
         for y in range(y1, y2 + 1):
-            self.grid[y][x] = 1
+            self.grid[y][x] = WALL
         
         # Создаем несколько проходов в стене (1-3 прохода)
         num_passages = random.randint(1, 3)
         for _ in range(num_passages):
             passage_y = random.randint(y1, y2)
-            self.grid[passage_y][x] = 0
+            self.grid[passage_y][x] = PATH
     
     def create_horizontal_wall(self, y: int, x1: int, x2: int):
         """Создание горизонтальной стены с проходами"""
         # Создаем стену
         for x in range(x1, x2 + 1):
-            self.grid[y][x] = 1
+            self.grid[y][x] = WALL
         
         # Создаем несколько проходов в стене (1-3 прохода)
         num_passages = random.randint(1, 3)
         for _ in range(num_passages):
             passage_x = random.randint(x1, x2)
-            self.grid[y][passage_x] = 0
+            self.grid[y][passage_x] = PATH
     
     def create_entrance_exit(self):
         """Создание входа и выхода"""
         # Вход (верхняя часть)
-        self.grid[0][1] = 0
-        self.grid[1][1] = 0
+        self.grid[0][1] = PATH
+        self.grid[1][1] = PATH
         
         # Выход (нижняя часть)
-        self.grid[self.height - 1][self.width - 2] = 0
-        self.grid[self.height - 2][self.width - 2] = 0
+        self.grid[self.height - 1][self.width - 2] = PATH
+        self.grid[self.height - 2][self.width - 2] = PATH
         
         # Создаем путь от входа к основной части лабиринта
         self.connect_entrance()
@@ -123,7 +134,7 @@ class Maze:
         # Ищем ближайшую пустую клетку от входа
         for y in range(2, min(5, self.height - 1)):
             for x in range(1, min(4, self.width - 1)):
-                if self.grid[y][x] == 0:
+                if self.grid[y][x] == PATH:
                     # Создаем путь от входа к этой клетке
                     self.create_path((1, 1), (y, x))
                     return
@@ -133,7 +144,7 @@ class Maze:
         # Ищем ближайшую пустую клетку от выхода
         for y in range(self.height - 3, max(self.height - 6, 1), -1):
             for x in range(self.width - 3, max(self.width - 6, 1), -1):
-                if self.grid[y][x] == 0:
+                if self.grid[y][x] == PATH:
                     # Создаем путь от выхода к этой клетке
                     self.create_path((self.height - 2, self.width - 2), (y, x))
                     return
@@ -158,7 +169,7 @@ class Maze:
             # Проверяем границы и создаем путь
             if (0 <= new_pos[0] < self.height and 
                 0 <= new_pos[1] < self.width):
-                self.grid[new_pos[0]][new_pos[1]] = 0
+                self.grid[new_pos[0]][new_pos[1]] = PATH
                 current = new_pos
             else:
                 break
@@ -171,7 +182,7 @@ class Maze:
             row = random.randint(1, self.height - 2)
             col = random.randint(1, self.width - 2)
             if random.random() < (0.2 if minimal else 0.5):
-                self.grid[row][col] = 0
+                self.grid[row][col] = PATH
         self.create_connecting_passages()
     
     def create_connecting_passages(self):
@@ -179,7 +190,7 @@ class Maze:
         # Проходим по всей сетке и создаем проходы в стенах
         for row in range(1, self.height - 1):
             for col in range(1, self.width - 1):
-                if self.grid[row][col] == 1:  # Если это стена
+                if self.grid[row][col] == WALL:  # Если это стена
                     # Проверяем соседние клетки
                     neighbors = [
                         (row-1, col), (row+1, col),  # Вертикальные соседи
@@ -190,24 +201,28 @@ class Maze:
                     empty_neighbors = 0
                     for nr, nc in neighbors:
                         if (0 <= nr < self.height and 0 <= nc < self.width and 
-                            self.grid[nr][nc] == 0):
+                            self.grid[nr][nc] == PATH):
                             empty_neighbors += 1
                     
                     # Если рядом есть пустые клетки, создаем проход с некоторой вероятностью
                     if empty_neighbors > 0 and random.random() < 0.3:
-                        self.grid[row][col] = 0
+                        self.grid[row][col] = PATH
     
     def create_changing_walls(self):
-        """Создание меняющихся стен"""
+        """
+        Определяет стены, которые могут меняться во время игры.
+        Выбирает случайные проходимые ячейки и делает их "меняющимися стенами".
+        """
         self.changing_walls = []
-        change_count = (self.width * self.height) // 30
+        # Уменьшаем количество меняющихся стен для производительности
+        num_changing_walls = (self.width * self.height) // 10  # Было 5
         
-        for _ in range(change_count):
+        for _ in range(num_changing_walls):
             row = random.randint(1, self.height - 2)
             col = random.randint(1, self.width - 2)
             
             # Добавляем стену как меняющуюся
-            if self.grid[row][col] == 0:
+            if self.grid[row][col] == PATH:
                 self.changing_walls.append((row, col))
     
     def update_changing_walls(self, current_time, bonus_positions=None):
@@ -259,7 +274,7 @@ class Maze:
                 changes = {}
                 for row, col in positions:
                     changes[(row, col)] = self.grid[row][col]
-                    self.grid[row][col] = 1 - self.grid[row][col]
+                    self.grid[row][col] = WALL if self.grid[row][col] == PATH else PATH
                 
                 # Проверяем путь после изменений
                 path = self.find_path((1, 1), (self.height - 2, self.width - 2))
@@ -297,7 +312,7 @@ class Maze:
             open_set.remove(current)
             for dr, dc in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
                 neighbor = (current[0] + dr, current[1] + dc)
-                if (0 <= neighbor[0] < height and 0 <= neighbor[1] < width and grid[neighbor[0]][neighbor[1]] == 0):
+                if (0 <= neighbor[0] < height and 0 <= neighbor[1] < width and grid[neighbor[0]][neighbor[1]] == PATH):
                     tentative_g = g_score.get(current, float('inf')) + 1
                     if tentative_g < g_score.get(neighbor, float('inf')):
                         came_from[neighbor] = current
@@ -313,7 +328,7 @@ class Maze:
         while attempts < 100:
             row = random.randint(1, self.height - 2)
             col = random.randint(1, self.width - 2)
-            if self.grid[row][col] == 0:
+            if self.grid[row][col] == PATH:
                 return (row, col)
             attempts += 1
         return (1, 1)  # Fallback
@@ -322,7 +337,7 @@ class Maze:
         """Проверка, является ли позиция стеной"""
         row, col = position
         if 0 <= row < self.height and 0 <= col < self.width:
-            return self.grid[row][col] == 1
+            return self.grid[row][col] == WALL
         return True
     
     def find_path(self, start: Tuple[int, int], goal: Tuple[int, int]) -> List[Tuple[int, int]]:
@@ -349,7 +364,7 @@ class Maze:
                 
                 if (0 <= neighbor[0] < self.height and 
                     0 <= neighbor[1] < self.width and 
-                    self.grid[neighbor[0]][neighbor[1]] == 0):
+                    self.grid[neighbor[0]][neighbor[1]] == PATH):
                     
                     tentative_g = g_score.get(current, float('inf')) + 1
                     
@@ -416,13 +431,19 @@ class Maze:
             # Проверяем границы и создаем путь
             if (0 <= new_pos[0] < self.height and 
                 0 <= new_pos[1] < self.width):
-                self.grid[new_pos[0]][new_pos[1]] = 0
+                self.grid[new_pos[0]][new_pos[1]] = PATH
                 current = new_pos
             else:
                 break
     
     def ensure_maze_passability(self, player_position, exit_position):
-        """Проверка и обеспечение проходимости лабиринта"""
+        """
+        Проверяет и при необходимости восстанавливает проходимость лабиринта.
+
+        Если от позиции игрока нет пути к выходу, сначала пытается "пробить"
+        несколько случайных стен. Если это не помогает, создает гарантированный
+        прямой путь.
+        """
         # Проверяем путь от игрока к выходу
         path = self.find_path(player_position, exit_position)
         
@@ -448,7 +469,7 @@ class Maze:
             row = random.randint(1, self.height - 2)
             col = random.randint(1, self.width - 2)
             
-            if self.grid[row][col] == 1:  # Если это стена
+            if self.grid[row][col] == WALL:  # Если это стена
                 # Проверяем, что рядом есть пустые клетки
                 neighbors = [
                     (row-1, col), (row+1, col),  # Вертикальные соседи
@@ -458,12 +479,12 @@ class Maze:
                 empty_neighbors = 0
                 for nr, nc in neighbors:
                     if (0 <= nr < self.height and 0 <= nc < self.width and 
-                        self.grid[nr][nc] == 0):
+                        self.grid[nr][nc] == PATH):
                         empty_neighbors += 1
                 
                 # Если рядом есть пустые клетки, создаем проход
                 if empty_neighbors > 0:
-                    self.grid[int(row)][int(col)] = 0
+                    self.grid[int(row)][int(col)] = PATH
                     
                     # Проверяем, появился ли путь
                     path = self.find_path(player_position, exit_position)
@@ -481,5 +502,5 @@ class Maze:
         for _ in range(5):
             row = random.randint(1, self.height - 2)
             col = random.randint(1, self.width - 2)
-            if self.grid[int(row)][int(col)] == 1:
-                self.grid[int(row)][int(col)] = 0 
+            if self.grid[int(row)][int(col)] == WALL:
+                self.grid[int(row)][int(col)] = PATH 

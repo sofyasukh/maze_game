@@ -161,11 +161,12 @@ class GameState:
         for bonus in self.bonuses[:]:
             if bonus.active:
                 if bonus.type == BOMB:
-                    # Для бомбы: проверяем радиус 3 клетки
+                    # Для бомбы: проверяем радиус
                     px, py = bonus.position
                     player_pos = self.player.position
-                    if abs(player_pos[0] - px) + abs(player_pos[1] - py) <= 3:
+                    if abs(player_pos[0] - px) + abs(player_pos[1] - py) <= BOMB_EXPLOSION_RADIUS:
                         if bonus.apply_effect(self.player, self):
+                            self.last_applied_bonus = bonus.type
                             bonus.active = False
                 else:
                     # Для остальных бонусов: точное совпадение позиций

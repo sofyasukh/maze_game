@@ -36,18 +36,17 @@ class Bonus:
             return True
         
         elif self.type == BOMB:
-            # Детонация в радиусе 3 клеток
+            # Детонация в радиусе
             px, py = self.position
             # Игрок уже в радиусе (проверка сделана в check_collisions)
             game_state.state = 'GAME_OVER'
-            game_state.death_reason = 'bomb'  # Устанавливаем причину смерти
-            # Создаём анимацию взрыва
+            game_state.death_reason = 'bomb'
             game_state.create_explosion_animation(self.position)
             # Деактивируем все бонусы в радиусе (кроме самой бомбы)
             for bonus in game_state.bonuses:
                 if bonus is not self and bonus.active:
                     bx, by = bonus.position
-                    if abs(bx - px) + abs(by - py) <= 3:
+                    if abs(bx - px) + abs(by - py) <= BOMB_EXPLOSION_RADIUS:
                         bonus.active = False
             return True
         

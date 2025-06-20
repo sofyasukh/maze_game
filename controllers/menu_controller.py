@@ -4,10 +4,11 @@ from views.menu_view import MenuView
 from controllers.sound_controller import SoundController
 
 class MenuController:
-    def __init__(self, screen: pygame.Surface):
+    def __init__(self, screen: pygame.Surface, asset_manager):
         self.screen = screen
-        self.menu_view = MenuView(screen)
-        self.sound_controller = SoundController()
+        self.asset_manager = asset_manager
+        self.menu_view = MenuView(screen, asset_manager)
+        self.sound_controller = SoundController(asset_manager)
         self.clock = pygame.time.Clock()
         
         # Состояние меню

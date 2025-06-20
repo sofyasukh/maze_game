@@ -2,84 +2,66 @@ import pygame
 from views.menu_view import MenuView
 
 class SoundController:
-    def __init__(self):
-        # Загрузка всех звуков
-        self.click_sound = pygame.mixer.Sound("assets/sounds/click.wav")
-        self.freezing_sound = pygame.mixer.Sound("assets/sounds/freezing.wav")
-        self.teleporting_sound = pygame.mixer.Sound("assets/sounds/teleporting.wav")
-        self.hint_sound = pygame.mixer.Sound("assets/sounds/hint.wav")
-        self.win_sound = pygame.mixer.Sound("assets/sounds/win.wav")
-        self.boom_sound = pygame.mixer.Sound("assets/sounds/boom.wav")
-        self.soundtrack = pygame.mixer.Sound("assets/sounds/soundtrack.wav")
+    def __init__(self, asset_manager):
+        self.asset_manager = asset_manager
+        # Получение звуков из AssetManager
+        self.click_sound = self.asset_manager.get_sound('click')
+        self.freezing_sound = self.asset_manager.get_sound('freezing')
+        self.teleporting_sound = self.asset_manager.get_sound('teleporting')
+        self.hint_sound = self.asset_manager.get_sound('hint')
+        self.win_sound = self.asset_manager.get_sound('win')
+        self.boom_sound = self.asset_manager.get_sound('boom')
+        self.soundtrack = self.asset_manager.get_sound('soundtrack')
         
         # Глобальное состояние музыки
         self.music_enabled = True
     
     def play_click_sound(self):
         """Воспроизведение звука клика"""
-        try:
+        if self.click_sound:
             self.click_sound.play()
-        except:
-            pass
     
     def play_freezing_sound(self):
         """Воспроизведение звука заморозки"""
-        try:
+        if self.freezing_sound:
             self.freezing_sound.play()
-        except:
-            pass
     
     def play_teleporting_sound(self):
         """Воспроизведение звука телепортации"""
-        try:
+        if self.teleporting_sound:
             self.teleporting_sound.play()
-        except:
-            pass
     
     def play_hint_sound(self):
         """Воспроизведение звука подсказки"""
-        try:
+        if self.hint_sound:
             self.hint_sound.play()
-        except:
-            pass
     
     def play_win_sound(self):
         """Воспроизведение звука победы"""
-        try:
+        if self.win_sound:
             self.win_sound.play()
-        except:
-            pass
     
     def play_explosion_sound(self):
         """Воспроизведение звука взрыва с остановкой музыки"""
-        try:
-            self.stop_soundtrack()
+        self.stop_soundtrack()
+        if self.boom_sound:
             self.boom_sound.play()
-        except:
-            pass
     
     def play_soundtrack(self):
         """Воспроизведение фоновой музыки с зацикливанием"""
-        if self.music_enabled:
-            try:
-                self.soundtrack.set_volume(0.3)
-                self.soundtrack.play(-1)
-            except:
-                pass
+        if self.music_enabled and self.soundtrack:
+            self.soundtrack.set_volume(0.3)
+            self.soundtrack.play(-1)
     
     def stop_soundtrack(self):
         """Остановка фоновой музыки"""
-        try:
+        if self.soundtrack:
             self.soundtrack.stop()
-        except:
-            pass
     
     def pause_soundtrack(self):
         """Пауза фоновой музыки"""
-        try:
+        if self.soundtrack:
             self.soundtrack.stop()
-        except:
-            pass
     
     def toggle_music(self):
         """Переключение музыки вкл/выкл"""

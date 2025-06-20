@@ -4,12 +4,14 @@ from config import *
 class Player:
     def __init__(self, position: Tuple[int, int]):
         self.position = position  # Логическая позиция (клетка)
+        self.pixel_pos = list(position)
+        self.target_pixel_pos = list(position)
+        self.move_timer = 0
+        self.speed = PLAYER_SPEED  # Использование константы
         self.frozen = False
         self.freeze_timer = 0
-        self.pixel_pos = [position[1], position[0]]  # [x, y] в клетках
         self.target_cell = position
         self.moving = False
-        self.move_speed = 5  # Клеток в секунду
 
     def move(self, direction: Tuple[int, int], maze) -> bool:
         if self.frozen or self.moving:
@@ -34,7 +36,7 @@ class Player:
             dx = tx - px
             dy = ty - py
             dist = (dx ** 2 + dy ** 2) ** 0.5
-            step = self.move_speed * dt
+            step = self.speed * dt
             if dist <= step:
                 self.pixel_pos = [tx, ty]
                 self.position = self.target_cell

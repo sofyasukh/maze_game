@@ -5,11 +5,12 @@ from views.game_view import GameView
 from controllers.sound_controller import SoundController
 
 class GameController:
-    def __init__(self, screen: pygame.Surface, menu_view=None):
+    def __init__(self, screen: pygame.Surface, menu_view, asset_manager):
         self.screen = screen
+        self.asset_manager = asset_manager
         self.game_state = None
-        self.game_view = GameView(screen)
-        self.sound_controller = SoundController()
+        self.game_view = GameView(screen, asset_manager)
+        self.sound_controller = SoundController(asset_manager)
         self.clock = pygame.time.Clock()
         self.menu_view = menu_view  # Ссылка на MenuView для обновления рекордов
     
@@ -63,12 +64,13 @@ class GameController:
                 
                 # Воспроизводим звуки при применении бонусов
                 if self.game_state.last_applied_bonus:
-                    if self.game_state.last_applied_bonus == FREEZE:
-                        self.sound_controller.play_freezing_sound()
-                    elif self.game_state.last_applied_bonus == TELEPORT:
-                        self.sound_controller.play_teleporting_sound()
-                    elif self.game_state.last_applied_bonus == PATH_HINT:
-                        self.sound_controller.play_hint_sound()
+                    match self.game_state.last_applied_bonus:
+                        case "freeze":
+                            self.sound_controller.play_freezing_sound()
+                        case "teleport":
+                            self.sound_controller.play_teleporting_sound()
+                        case "path_hint":
+                            self.sound_controller.play_hint_sound()
                     # Сбрасываем флаг
                     self.game_state.last_applied_bonus = None
                 

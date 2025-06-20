@@ -7,12 +7,13 @@ class MenuView:
     # Глобальное состояние музыки
     global_music_enabled = True
     
-    def __init__(self, screen: pygame.Surface):
+    def __init__(self, screen: pygame.Surface, asset_manager):
         self.screen = screen
+        self.asset_manager = asset_manager
         self.font = pygame.font.Font(None, 36)
         self.big_font = pygame.font.Font(None, 72)
-        # Загрузка фонового изображения меню
-        self.menu_bg = pygame.image.load("assets/images/menu.png").convert()
+        # Получение фонового изображения из AssetManager
+        self.menu_bg = self.asset_manager.get_image('menu_bg')
         
         # Настройки
         self.music_enabled = MenuView.global_music_enabled

@@ -3,25 +3,27 @@ from config import *
 from views.menu_view import MenuView
 
 class GameView:
-    def __init__(self, screen: pygame.Surface):
+    def __init__(self, screen: pygame.Surface, asset_manager):
         self.screen = screen
+        self.asset_manager = asset_manager
         self.font = pygame.font.Font(None, 36)
         self.big_font = pygame.font.Font(None, 72)
         
-        # Загрузка изображений
-        self.wall_img = pygame.image.load("assets/images/wall.png").convert_alpha()
-        self.floor_img = pygame.image.load("assets/images/floor.png").convert_alpha()
-        self.flag_img = pygame.image.load("assets/images/flag.png").convert_alpha()
+        # Получение изображений из AssetManager
+        self.wall_img = self.asset_manager.get_image('wall')
+        self.floor_img = self.asset_manager.get_image('floor')
+        self.flag_img = self.asset_manager.get_image('flag')
         
-        # Загрузка изображений бонусов
-        self.bonus_images = {}
-        self.bonus_images[FREEZE] = pygame.image.load("assets/images/freeze.png").convert_alpha()
-        self.bonus_images[TELEPORT] = pygame.image.load("assets/images/teleport.png").convert_alpha()
-        self.bonus_images[PATH_HINT] = pygame.image.load("assets/images/path_hint.png").convert_alpha()
-        self.bonus_images[BOMB] = pygame.image.load("assets/images/bomb.png").convert_alpha()
+        # Получение изображений бонусов из AssetManager
+        self.bonus_images = {
+            FREEZE: self.asset_manager.get_image(FREEZE),
+            TELEPORT: self.asset_manager.get_image(TELEPORT),
+            PATH_HINT: self.asset_manager.get_image(PATH_HINT),
+            BOMB: self.asset_manager.get_image(BOMB)
+        }
         
-        # Загрузка изображения взрыва
-        self.explosion_img = pygame.image.load("assets/images/explosion.png").convert_alpha()
+        # Получение изображения взрыва
+        self.explosion_img = self.asset_manager.get_image('explosion')
         
         # Загрузка текстур пола, стен и фона
         self.background = pygame.image.load("assets/images/background.png").convert()
@@ -85,15 +87,14 @@ class GameView:
         self.draw_explosions(game_state.explosion_animations, min_row, min_col, offset_x, offset_y)
         
         # ТУМАН ВОЙНЫ для уровней 4 и 5
-        if game_state.level in (4, 5):
+        if game_state.level in FOG_OF_WAR_RADIUS:
             fog = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA) 
             fog.fill((0, 0, 0, 255))
             player_x = (player_col - min_col) * CELL_SIZE + offset_x + CELL_SIZE // 2
             player_y = (player_row - min_row) * CELL_SIZE + offset_y + CELL_SIZE // 2
-            if game_state.level == 4:
-                radius = CELL_SIZE * 5
-            else:
-                radius = CELL_SIZE * 3
+            
+            radius = CELL_SIZE * FOG_OF_WAR_RADIUS[game_state.level]
+
             steps = 16
             for i in range(steps, 0, -1):
                 alpha = int(255 * (i / steps))

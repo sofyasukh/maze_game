@@ -29,6 +29,18 @@ TELEPORT = "teleport"
 PATH_HINT = "path_hint"
 BOMB = "bomb"
 
+# Игровые параметры
+PLAYER_SPEED = 5
+BOMB_EXPLOSION_RADIUS = 3
+FOG_OF_WAR_RADIUS = {
+    4: 5,  # Для 4 уровня
+    5: 3   # Для 5 уровня
+}
+
+# Константы для лабиринта
+WALL = 1
+PATH = 0
+
 # Уровни
 LEVELS = {
     1: {"size": (17, 17), "bonuses": 3, "wall_change_interval": 3000},
