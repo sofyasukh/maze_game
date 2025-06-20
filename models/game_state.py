@@ -145,6 +145,9 @@ class GameState:
         
         success = self.player.move(direction, self.maze.grid)
         if success:
+            # Обновляем путь подсказки при движении игрока
+            if self.show_path_hint:
+                self.path_hint = self.maze.find_path(self.player.position, self.exit)
             self.check_collisions()
         return success
     

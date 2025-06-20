@@ -264,7 +264,9 @@ class GameView:
     
     def draw_path_hint(self, path_hint, min_row=0, min_col=0, offset_x=0, offset_y=0):
         """Отрисовка подсказки пути"""
-        for i in range(len(path_hint) - 1):
+        # Исключаем текущую позицию игрока из отображения пути
+        # Рисуем путь начиная со второго элемента (индекс 1)
+        for i in range(1, len(path_hint) - 1):
             current = path_hint[i]
             next_pos = path_hint[i + 1]
             
